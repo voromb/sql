@@ -1,19 +1,29 @@
-EXAMEN EXTENSO DE SQL - Casos Complicados y Técnicas Avanzadas
-ENUNCIADO Y CHULETA DE ESTUDIO
-📚 ESQUEMAS DE BASES DE DATOS
-🚴 Base de Datos CICLISMO
-sqlEQUIPO(nomeq, director)
+# EXAMEN EXTENSO DE SQL - Casos Complicados y Técnicas Avanzadas
+
+## ENUNCIADO Y CHULETA DE ESTUDIO
+
+### 📚 **ESQUEMAS DE BASES DE DATOS**
+
+#### 🚴 **Base de Datos CICLISMO**
+```sql
+EQUIPO(nomeq, director)
 CICLISTA(dorsal, nombre, edad, nomeq)
 ETAPA(netapa, km, salida, llegada, dorsal)
 PUERTO(nompuerto, altura, pendiente, categoria, netapa, dorsal)
 MAILLOT(codigo, tipo, premio, color)
 LLEVAR(codigo, netapa, dorsal)
-🚗 Base de Datos SEGUNDA MANO
-sqlCONCESIONARIO(codi_con, nom, ciudad, director)
+```
+
+#### 🚗 **Base de Datos SEGUNDA MANO**
+```sql
+CONCESIONARIO(codi_con, nom, ciudad, director)
 VENDEDOR(dni, nom, tlf, ventas, codi_con)
 COCHE(matricula, marca, modelo, color, kms, precio, codi_con)
-🎵 Base de Datos MÚSICA
-sqlCOMPANYIA(cod, nombre, dir, fax, tfno)
+```
+
+#### 🎵 **Base de Datos MÚSICA**
+```sql
+COMPANYIA(cod, nombre, dir, fax, tfno)
 DISCO(cod, nombre, fecha, cod_comp, cod_gru)
 GRUPO(cod, nombre, fecha, pais)
 ARTISTA(dni, nombre)
@@ -21,8 +31,11 @@ CLUB(cod, nombre, sede, num, cod_gru)
 CANCION(cod, titulo, duracion)
 ESTA(cod, can)
 PERTENECE(dni, cod, funcion)
-📚 Base de Datos BIBLIOTECA
-sqlAUTOR(autor_id, nombre, nacionalidad)
+```
+
+#### 📚 **Base de Datos BIBLIOTECA**
+```sql
+AUTOR(autor_id, nombre, nacionalidad)
 LIBRO(id_lib, titulo, año, varias_obras)
 TEMA(tematica, descripcion)
 OBRA(cod_ob, titulo, tematica)
@@ -30,27 +43,35 @@ AMIGO(num, nombre, telefono)
 PRESTAMO(num, id_lib)
 ESTA_EN(cod_ob, id_lib)
 ESCRIBIR(cod_ob, autor_id)
+```
 
-🔥 CASOS CRÍTICOS: NOT EXISTS vs NOT IN
-⚠️ REGLA DE ORO:
+---
 
-NOT IN: Se rompe con valores NULL (devuelve UNKNOWN)
-NOT EXISTS: Funciona correctamente con NULL
-LEFT JOIN + IS NULL: Alternativa robusta
+## 🔥 **CASOS CRÍTICOS: NOT EXISTS vs NOT IN**
 
+### ⚠️ **REGLA DE ORO:**
+- **NOT IN**: Se rompe con valores NULL (devuelve UNKNOWN)
+- **NOT EXISTS**: Funciona correctamente con NULL
+- **LEFT JOIN + IS NULL**: Alternativa robusta
 
-🎯 CASOS LEFT JOIN ESENCIALES
-🔍 Cuándo usar LEFT JOIN:
+---
 
-Incluir registros sin coincidencias (ej: equipos sin ciclistas)
-Contar elementos que pueden ser cero
-Evitar perder datos en agregaciones
+## 🎯 **CASOS LEFT JOIN ESENCIALES**
 
+### 🔍 **Cuándo usar LEFT JOIN:**
+1. **Incluir registros sin coincidencias** (ej: equipos sin ciclistas)
+2. **Contar elementos que pueden ser cero**
+3. **Evitar perder datos en agregaciones**
 
-📝 EXAMEN PRÁCTICO - 30 EJERCICIOS
-EJERCICIO 1 - DIVISIÓN RELACIONAL (★★★★★)
-Obtener el nombre de los ciclistas que han ganado todos los puertos de una etapa y además han ganado esa misma etapa.
-sqlSELECT c.nombre
+---
+
+## 📝 **EXAMEN PRÁCTICO - 30 EJERCICIOS**
+
+### **EJERCICIO 1 - DIVISIÓN RELACIONAL (★★★★★)**
+**Obtener el nombre de los ciclistas que han ganado todos los puertos de una etapa y además han ganado esa misma etapa.**
+
+```sql
+SELECT c.nombre
 FROM ciclista c 
 INNER JOIN etapa e ON c.dorsal = e.dorsal
 INNER JOIN puerto p ON e.netapa = p.netapa AND c.dorsal = p.dorsal
@@ -60,37 +81,57 @@ HAVING COUNT(DISTINCT p.nompuerto) = (
     FROM puerto p2
     WHERE p2.netapa = e.netapa
 );
+```
 
-EJERCICIO 2 - NOT EXISTS COMPLEJO (★★★★★)
-Obtener el nombre de los equipos tal que sus ciclistas SOLO hayan ganado puertos de 1ª categoría.
-sqlSELECT DISTINCT e.nomeq
+---
+
+### **EJERCICIO 2 - NOT EXISTS COMPLEJO (★★★★★)**
+**Obtener el nombre de los equipos tal que sus ciclistas SOLO hayan ganado puertos de 1ª categoría.**
+
+```sql
+SELECT DISTINCT e.nomeq
 FROM equipo e INNER JOIN ciclista c ON e.nomeq = c.nomeq
 WHERE NOT EXISTS (
     SELECT 1
     FROM ciclista c2 INNER JOIN puerto p ON c2.dorsal = p.dorsal
     WHERE c2.nomeq = e.nomeq AND p.categoria != 1
 );
+```
 
-EJERCICIO 3 - RANKING SIN LIMIT (★★★★)
-Obtener el décimo club con mayor número de fans (debe haber solo 9 por encima de él).
-sqlSELECT c.nombre, c.num
+---
+
+### **EJERCICIO 3 - RANKING SIN LIMIT (★★★★)**
+**Obtener el décimo club con mayor número de fans (debe haber solo 9 por encima de él).**
+
+```sql
+SELECT c.nombre, c.num
 FROM club c
 WHERE 9 = (
     SELECT COUNT(*)
     FROM club c2
     WHERE c.num < c2.num
 );
+```
 
-EJERCICIO 4 - LEFT JOIN + HAVING (★★★★)
-Obtener el nombre de los ciclistas que han ganado más de un puerto, indicando cuántos han ganado.
-sqlSELECT c.nombre, COUNT(p.nompuerto)
+---
+
+### **EJERCICIO 4 - LEFT JOIN + HAVING (★★★★)**
+**Obtener el nombre de los ciclistas que han ganado más de un puerto, indicando cuántos han ganado.**
+
+```sql
+SELECT c.nombre, COUNT(p.nompuerto)
 FROM ciclista c LEFT JOIN puerto p ON c.dorsal = p.dorsal
 GROUP BY c.dorsal
 HAVING COUNT(p.nompuerto) > 1;
+```
 
-EJERCICIO 5 - NOT EXISTS CON MÚLTIPLES CONDICIONES (★★★★)
-Obtener el nombre de las compañías discográficas que solo han trabajado con grupos españoles.
-sqlSELECT DISTINCT c.nombre
+---
+
+### **EJERCICIO 5 - NOT EXISTS CON MÚLTIPLES CONDICIONES (★★★★)**
+**Obtener el nombre de las compañías discográficas que solo han trabajado con grupos españoles.**
+
+```sql
+SELECT DISTINCT c.nombre
 FROM companyia c INNER JOIN disco d ON c.cod = d.cod_comp
 WHERE NOT EXISTS (
     SELECT 1
@@ -98,10 +139,15 @@ WHERE NOT EXISTS (
     INNER JOIN grupo g ON g.cod = d2.cod_gru
     WHERE c2.cod = c.cod AND g.pais != "España"
 );
+```
 
-EJERCICIO 6 - TODOS vs ALGUNOS (★★★★★)
-Obtener el nombre de los amigos que han leído todas las obras del autor 'RUKI'.
-sqlSELECT a.nombre
+---
+
+### **EJERCICIO 6 - TODOS vs ALGUNOS (★★★★★)**
+**Obtener el nombre de los amigos que han leído todas las obras del autor 'RUKI'.**
+
+```sql
+SELECT a.nombre
 FROM amigo a INNER JOIN prestamo p ON a.num = p.num
 INNER JOIN esta_en ee ON p.id_lib = ee.id_lib
 INNER JOIN escribir e ON e.cod_ob = ee.cod_ob
@@ -112,10 +158,15 @@ HAVING COUNT(DISTINCT e.cod_ob) = (
     FROM escribir e2
     WHERE e2.autor_id = "RUKI"
 );
+```
 
-EJERCICIO 7 - MÁXIMO CON >= ALL (★★★★)
-¿Cuál es la compañía discográfica que más canciones ha grabado?
-sqlSELECT c.nombre
+---
+
+### **EJERCICIO 7 - MÁXIMO CON >= ALL (★★★★)**
+**¿Cuál es la compañía discográfica que más canciones ha grabado?**
+
+```sql
+SELECT c.nombre
 FROM companyia c INNER JOIN disco d ON c.cod = d.cod_comp
 INNER JOIN esta e ON e.cod = d.cod
 GROUP BY c.cod
@@ -124,20 +175,30 @@ HAVING COUNT(e.can) >= ALL (
     FROM disco d2 INNER JOIN esta e2 ON e2.cod = d2.cod
     GROUP BY d2.cod_comp
 );
+```
 
-EJERCICIO 8 - ETAPAS SIN PUERTOS (★★★★)
-Obtener el número de etapa y la ciudad de salida de aquellas etapas que no tengan puertos de montaña.
-sqlSELECT e.netapa, e.salida
+---
+
+### **EJERCICIO 8 - ETAPAS SIN PUERTOS (★★★★)**
+**Obtener el número de etapa y la ciudad de salida de aquellas etapas que no tengan puertos de montaña.**
+
+```sql
+SELECT e.netapa, e.salida
 FROM etapa e
 WHERE NOT EXISTS (
     SELECT 1
     FROM puerto p
     WHERE p.netapa = e.netapa
 );
+```
 
-EJERCICIO 9 - TODOS LOS MIEMBROS DE UN GRUPO (★★★★★)
-Obtener el nombre de los equipos y la edad media de sus ciclistas de aquellos equipos cuya media de edad sea la máxima de todos los equipos.
-sqlSELECT c.nomeq, AVG(c.edad)
+---
+
+### **EJERCICIO 9 - TODOS LOS MIEMBROS DE UN GRUPO (★★★★★)**
+**Obtener el nombre de los equipos y la edad media de sus ciclistas de aquellos equipos cuya media de edad sea la máxima de todos los equipos.**
+
+```sql
+SELECT c.nomeq, AVG(c.edad)
 FROM ciclista c
 GROUP BY c.nomeq
 HAVING AVG(c.edad) >= ALL (
@@ -145,34 +206,54 @@ HAVING AVG(c.edad) >= ALL (
     FROM ciclista c2
     GROUP BY c2.nomeq
 );
+```
 
-EJERCICIO 10 - CONDICIÓN ÚNICA (★★★★★)
-Obtener el título de la canción de mayor duración si es única.
-sqlSELECT c.titulo, c.duracion
+---
+
+### **EJERCICIO 10 - CONDICIÓN ÚNICA (★★★★★)**
+**Obtener el título de la canción de mayor duración si es única.**
+
+```sql
+SELECT c.titulo, c.duracion
 FROM cancion c
 WHERE c.duracion = (SELECT MAX(duracion) FROM cancion)
 GROUP BY c.duracion
 HAVING COUNT(*) = 1;
+```
 
-EJERCICIO 11 - LEFT JOIN PARA INCLUIR TODOS (★★★★)
-Obtener el nombre de todos los equipos indicando cuántos ciclistas tiene cada uno (incluyendo los que no tienen ninguno).
-sqlSELECT e.nomeq, COUNT(c.dorsal)
+---
+
+### **EJERCICIO 11 - LEFT JOIN PARA INCLUIR TODOS (★★★★)**
+**Obtener el nombre de todos los equipos indicando cuántos ciclistas tiene cada uno (incluyendo los que no tienen ninguno).**
+
+```sql
+SELECT e.nomeq, COUNT(c.dorsal)
 FROM equipo e LEFT JOIN ciclista c ON e.nomeq = c.nomeq
 GROUP BY e.nomeq;
+```
 
-EJERCICIO 12 - AUTORES SIN OBRAS (★★★★)
-Obtener el nombre de los autores de los que no se tiene ninguna obra.
-sqlSELECT a.nombre
+---
+
+### **EJERCICIO 12 - AUTORES SIN OBRAS (★★★★)**
+**Obtener el nombre de los autores de los que no se tiene ninguna obra.**
+
+```sql
+SELECT a.nombre
 FROM autor a
 WHERE NOT EXISTS (
     SELECT 1
     FROM escribir e
     WHERE e.autor_id = a.autor_id
 );
+```
 
-EJERCICIO 13 - MÚLTIPLES CONDICIONES EN HAVING (★★★★)
-Obtener el nombre de los ciclistas que pertenezcan a un equipo que tenga más de cinco corredores y que hayan ganado alguna etapa, indicando cuántas etapas ha ganado.
-sqlSELECT c.nombre, COUNT(e.netapa) as etapas_ganadas
+---
+
+### **EJERCICIO 13 - MÚLTIPLES CONDICIONES EN HAVING (★★★★)**
+**Obtener el nombre de los ciclistas que pertenezcan a un equipo que tenga más de cinco corredores y que hayan ganado alguna etapa, indicando cuántas etapas ha ganado.**
+
+```sql
+SELECT c.nombre, COUNT(e.netapa) as etapas_ganadas
 FROM ciclista c INNER JOIN etapa e ON c.dorsal = e.dorsal
 WHERE c.nomeq IN (
     SELECT c2.nomeq
@@ -181,20 +262,30 @@ WHERE c.nomeq IN (
     HAVING COUNT(c2.dorsal) > 5
 )
 GROUP BY c.dorsal;
+```
 
-EJERCICIO 14 - COMPARACIÓN CON SUBCONSULTA (★★★★)
-Obtener los nombres de los puertos cuya altura es mayor que la media de altura de los puertos de 2ª categoría.
-sqlSELECT p.nompuerto
+---
+
+### **EJERCICIO 14 - COMPARACIÓN CON SUBCONSULTA (★★★★)**
+**Obtener los nombres de los puertos cuya altura es mayor que la media de altura de los puertos de 2ª categoría.**
+
+```sql
+SELECT p.nompuerto
 FROM puerto p
 WHERE p.altura > (
     SELECT AVG(p2.altura)
     FROM puerto p2
     WHERE p2.categoria = 2
 );
+```
 
-EJERCICIO 15 - MÚLTIPLES NIVELES DE AGRUPACIÓN (★★★★★)
-Obtener el nombre de los artistas que tengan la función de bajo en un único grupo y que además éste tenga más de dos miembros.
-sqlSELECT a.nombre
+---
+
+### **EJERCICIO 15 - MÚLTIPLES NIVELES DE AGRUPACIÓN (★★★★★)**
+**Obtener el nombre de los artistas que tengan la función de bajo en un único grupo y que además éste tenga más de dos miembros.**
+
+```sql
+SELECT a.nombre
 FROM artista a INNER JOIN pertenece p ON a.dni = p.dni
 WHERE p.funcion = "bajo"
 AND p.cod IN (
@@ -205,33 +296,53 @@ AND p.cod IN (
 )
 GROUP BY a.dni
 HAVING COUNT(p.cod) = 1;
+```
 
-EJERCICIO 16 - ETAPAS CON CONDICIONES ESPECIALES (★★★★)
-Obtener el valor del atributo netapa de aquellas etapas tales que todos los puertos que están en ellas tienen más de 700 metros de altura.
-sqlSELECT e.netapa
+---
+
+### **EJERCICIO 16 - ETAPAS CON CONDICIONES ESPECIALES (★★★★)**
+**Obtener el valor del atributo netapa de aquellas etapas tales que todos los puertos que están en ellas tienen más de 700 metros de altura.**
+
+```sql
+SELECT e.netapa
 FROM etapa e INNER JOIN puerto p ON e.netapa = p.netapa
 GROUP BY e.netapa
 HAVING MIN(p.altura) > 700;
+```
 
-EJERCICIO 17 - TODOS LOS DE UN TIPO (★★★★★)
-Obtener el nombre y el director de los equipos tales que todos sus ciclistas son mayores de 26 años.
-sqlSELECT e.nomeq, e.director
+---
+
+### **EJERCICIO 17 - TODOS LOS DE UN TIPO (★★★★★)**
+**Obtener el nombre y el director de los equipos tales que todos sus ciclistas son mayores de 26 años.**
+
+```sql
+SELECT e.nomeq, e.director
 FROM equipo e INNER JOIN ciclista c ON e.nomeq = c.nomeq
 GROUP BY e.nomeq
 HAVING MIN(c.edad) > 26;
+```
 
-EJERCICIO 18 - SOLO UN TIPO DE CARACTERÍSTICA (★★★★★)
-Obtener el nombre de los amigos que solo han leído obras de un autor.
-sqlSELECT a.nombre
+---
+
+### **EJERCICIO 18 - SOLO UN TIPO DE CARACTERÍSTICA (★★★★★)**
+**Obtener el nombre de los amigos que solo han leído obras de un autor.**
+
+```sql
+SELECT a.nombre
 FROM amigo a INNER JOIN prestamo p ON a.num = p.num
 INNER JOIN esta_en ee ON p.id_lib = ee.id_lib
 INNER JOIN escribir e ON ee.cod_ob = e.cod_ob
 GROUP BY a.num
 HAVING COUNT(DISTINCT e.autor_id) = 1;
+```
 
-EJERCICIO 19 - NACIONALIDADES MENOS FRECUENTES (★★★★)
-Obtener la nacionalidad (o nacionalidades) menos frecuentes entre los autores.
-sqlSELECT a.nacionalidad, COUNT(a.autor_id)
+---
+
+### **EJERCICIO 19 - NACIONALIDADES MENOS FRECUENTES (★★★★)**
+**Obtener la nacionalidad (o nacionalidades) menos frecuentes entre los autores.**
+
+```sql
+SELECT a.nacionalidad, COUNT(a.autor_id)
 FROM autor a
 GROUP BY a.nacionalidad
 HAVING COUNT(a.autor_id) <= ALL (
@@ -239,26 +350,41 @@ HAVING COUNT(a.autor_id) <= ALL (
     FROM autor a2
     GROUP BY a2.nacionalidad
 );
+```
 
-EJERCICIO 20 - CICLISTA MÁS JOVEN CON CONDICIÓN (★★★★)
-Obtener el nombre del ciclista más joven que ha ganado al menos una etapa.
-sqlSELECT c.nombre, c.edad
+---
+
+### **EJERCICIO 20 - CICLISTA MÁS JOVEN CON CONDICIÓN (★★★★)**
+**Obtener el nombre del ciclista más joven que ha ganado al menos una etapa.**
+
+```sql
+SELECT c.nombre, c.edad
 FROM ciclista c INNER JOIN etapa e ON c.dorsal = e.dorsal
 WHERE c.edad = (
     SELECT MIN(c2.edad)
     FROM ciclista c2 INNER JOIN etapa e2 ON c2.dorsal = e2.dorsal
 );
+```
 
-EJERCICIO 21 - OBRAS CON MÚLTIPLES AUTORES (★★★★)
-Obtener el título y el código de las obras que tengan más de un autor.
-sqlSELECT o.titulo, o.cod_ob
+---
+
+### **EJERCICIO 21 - OBRAS CON MÚLTIPLES AUTORES (★★★★)**
+**Obtener el título y el código de las obras que tengan más de un autor.**
+
+```sql
+SELECT o.titulo, o.cod_ob
 FROM obra o INNER JOIN escribir e ON o.cod_ob = e.cod_ob
 GROUP BY o.cod_ob
 HAVING COUNT(e.autor_id) > 1;
+```
 
-EJERCICIO 22 - CONCESIONARIO CON MÁS VENTAS (★★★★)
-Obtener el nombre del concesionario que tenga la mayor suma de ventas de sus vendedores.
-sqlSELECT c.nom
+---
+
+### **EJERCICIO 22 - CONCESIONARIO CON MÁS VENTAS (★★★★)**
+**Obtener el nombre del concesionario que tenga la mayor suma de ventas de sus vendedores.**
+
+```sql
+SELECT c.nom
 FROM concesionario c INNER JOIN vendedor v ON c.codi_con = v.codi_con
 GROUP BY c.codi_con
 HAVING SUM(v.ventas) >= ALL (
@@ -266,55 +392,93 @@ HAVING SUM(v.ventas) >= ALL (
     FROM vendedor v2
     GROUP BY v2.codi_con
 );
+```
 
-EJERCICIO 23 - ARTISTAS EN MÚLTIPLES GRUPOS (★★★★)
-Obtener el nombre de los artistas que pertenecen a más de un grupo.
-sqlSELECT a.nombre
+---
+
+### **EJERCICIO 23 - ARTISTAS EN MÚLTIPLES GRUPOS (★★★★)**
+**Obtener el nombre de los artistas que pertenecen a más de un grupo.**
+
+```sql
+SELECT a.nombre
 FROM artista a INNER JOIN pertenece p ON a.dni = p.dni
 GROUP BY a.dni
 HAVING COUNT(DISTINCT p.cod) > 1;
+```
 
-EJERCICIO 24 - LIBROS CON TÍTULO Y MÚLTIPLES OBRAS (★★★★)
-Obtener el título y el identificador de los libros que tengan título y más de dos obras, indicando el número de obras.
-sqlSELECT l.titulo, l.id_lib, l.varias_obras
+---
+
+### **EJERCICIO 24 - LIBROS CON TÍTULO Y MÚLTIPLES OBRAS (★★★★)**
+**Obtener el título y el identificador de los libros que tengan título y más de dos obras, indicando el número de obras.**
+
+```sql
+SELECT l.titulo, l.id_lib, l.varias_obras
 FROM libro l
 WHERE l.titulo IS NOT NULL AND l.varias_obras > 2;
+```
 
-EJERCICIO 25 - EDAD MEDIA DE GANADORES (★★★★)
-Obtener la edad media de los ciclistas que han ganado alguna etapa.
-sqlSELECT AVG(c.edad)
+---
+
+### **EJERCICIO 25 - EDAD MEDIA DE GANADORES (★★★★)**
+**Obtener la edad media de los ciclistas que han ganado alguna etapa.**
+
+```sql
+SELECT AVG(c.edad)
 FROM ciclista c INNER JOIN etapa e ON c.dorsal = e.dorsal;
+```
 
-EJERCICIO 26 - INSERT COMPLEJO (★★★)
-Añadir un nuevo coche con los siguientes datos:
+---
 
-Matrícula: '9876ZXY', Precio: 25000, Código concesionario: 'VAL03'
-Marca: 'TESLA', Modelo: 'MODEL_3', Color: 'BLANCO', Kilómetros: 0
+### **EJERCICIO 26 - INSERT COMPLEJO (★★★)**
+**Añadir un nuevo coche con los siguientes datos:**
+- Matrícula: '9876ZXY', Precio: 25000, Código concesionario: 'VAL03'
+- Marca: 'TESLA', Modelo: 'MODEL_3', Color: 'BLANCO', Kilómetros: 0
 
-sqlINSERT INTO coche (matricula, marca, modelo, color, kms, precio, codi_con) 
+```sql
+INSERT INTO coche (matricula, marca, modelo, color, kms, precio, codi_con) 
 VALUES ('9876ZXY', 'TESLA', 'MODEL_3', 'BLANCO', 0, 25000, 'VAL03');
+```
 
-EJERCICIO 27 - UPDATE CON PORCENTAJE (★★★)
-Incrementar un 15% el precio de todos los coches del concesionario de Valencia que tengan más de 50000 km.
-sqlUPDATE coche c 
+---
+
+### **EJERCICIO 27 - UPDATE CON PORCENTAJE (★★★)**
+**Incrementar un 15% el precio de todos los coches del concesionario de Valencia que tengan más de 50000 km.**
+
+```sql
+UPDATE coche c 
 INNER JOIN concesionario con ON c.codi_con = con.codi_con
 SET c.precio = c.precio * 1.15
 WHERE con.ciudad = 'Valencia' AND c.kms > 50000;
+```
 
-EJERCICIO 28 - INSERT VENDEDOR (★★★)
-Añadir un nuevo vendedor con DNI '12345678Z', nombre 'Ana García López', teléfono 966123456, ventas 85000, en el concesionario 'VAL01'.
-sqlINSERT INTO vendedor (dni, nom, tlf, ventas, codi_con)
+---
+
+### **EJERCICIO 28 - INSERT VENDEDOR (★★★)**
+**Añadir un nuevo vendedor con DNI '12345678Z', nombre 'Ana García López', teléfono 966123456, ventas 85000, en el concesionario 'VAL01'.**
+
+```sql
+INSERT INTO vendedor (dni, nom, tlf, ventas, codi_con)
 VALUES ('12345678Z', 'Ana García López', 966123456, 85000, 'VAL01');
+```
 
-EJERCICIO 29 - UPDATE PENDIENTE CON PORCENTAJE (★★★)
-Incrementar un 10% la pendiente del puerto 'Aitana' al haberse cerrado la carretera que había en buen estado.
-sqlUPDATE puerto p 
+---
+
+### **EJERCICIO 29 - UPDATE PENDIENTE CON PORCENTAJE (★★★)**
+**Incrementar un 10% la pendiente del puerto 'Aitana' al haberse cerrado la carretera que había en buen estado.**
+
+```sql
+UPDATE puerto p 
 SET p.pendiente = p.pendiente * 1.10 
 WHERE p.nompuerto = 'Aitana';
+```
 
-EJERCICIO 30 - RANKING TOP 3 SIN LIMIT (★★★★★)
-Obtener el nombre de los ciclistas que tengan la edad de las 3 mayores edades que hay en la vuelta.
-sqlSELECT c.nombre
+---
+
+### **EJERCICIO 30 - RANKING TOP 3 SIN LIMIT (★★★★★)**
+**Obtener el nombre de los ciclistas que tengan la edad de las 3 mayores edades que hay en la vuelta.**
+
+```sql
+SELECT c.nombre
 FROM ciclista c
 WHERE c.edad IN (
     SELECT DISTINCT edad
@@ -325,65 +489,59 @@ WHERE c.edad IN (
         WHERE c2.edad < c3.edad
     )
 );
+```
 
-🎓 CONCEPTOS CLAVE PARA RECORDAR
-🔸 NOT EXISTS vs NOT IN:
+---
 
-NOT EXISTS es más seguro con NULLs
-NOT IN se rompe si hay NULLs en la subconsulta
-NOT EXISTS funciona mejor para lógica de "no existe ninguno que..."
+## 🎓 **CONCEPTOS CLAVE PARA RECORDAR**
 
-🔸 LEFT JOIN Casos Críticos:
+### 🔸 **NOT EXISTS vs NOT IN:**
+- **NOT EXISTS** es más seguro con NULLs
+- **NOT IN** se rompe si hay NULLs en la subconsulta
+- **NOT EXISTS** funciona mejor para lógica de "no existe ninguno que..."
 
-Cuando necesitas incluir registros sin coincidencias
-Para contar elementos que pueden ser cero
-En agregaciones donde no quieres perder filas
-Siempre que el enunciado diga "todos" o "incluyendo los que no tienen"
+### 🔸 **LEFT JOIN Casos Críticos:**
+- Cuando necesitas incluir registros sin coincidencias
+- Para contar elementos que pueden ser cero
+- En agregaciones donde no quieres perder filas
+- Siempre que el enunciado diga "todos" o "incluyendo los que no tienen"
 
-🔸 HAVING vs WHERE:
+### 🔸 **HAVING vs WHERE:**
+- **WHERE**: filtra antes de agrupar (no puede usar funciones agregadas)
+- **HAVING**: filtra después de agrupar (puede usar COUNT, SUM, AVG, etc.)
 
-WHERE: filtra antes de agrupar (no puede usar funciones agregadas)
-HAVING: filtra después de agrupar (puede usar COUNT, SUM, AVG, etc.)
+### 🔸 **Evitar LIMIT - Técnicas Alternativas:**
+- Usar subconsultas con COUNT para rankings
+- **>= ALL** para obtener máximos
+- **<= ALL** para obtener mínimos
+- Contar cuántos elementos hay por encima/debajo
 
-🔸 Evitar LIMIT - Técnicas Alternativas:
+### 🔸 **División Relacional - Patrón "TODOS":**
+- Para consultas tipo "todos los X que cumplen Y"
+- Usar COUNT con subconsulta
+- Verificar que el conteo coincida exactamente
+- Ejemplo: "ciclistas que han ganado TODOS los puertos de una etapa"
 
-Usar subconsultas con COUNT para rankings
->= ALL para obtener máximos
-<= ALL para obtener mínimos
-Contar cuántos elementos hay por encima/debajo
+### 🔸 **Actualizar con Porcentajes:**
+- Usar operaciones matemáticas: `precio * 1.15` (aumentar 15%)
+- `precio * 0.85` (descuento del 15%)
+- `precio * 1.10` (incremento del 10%)
 
-🔸 División Relacional - Patrón "TODOS":
+### 🔸 **Subconsultas Correlacionadas:**
+- La subconsulta hace referencia a la consulta externa
+- Se ejecuta una vez por cada fila de la consulta externa
+- Muy útiles con EXISTS/NOT EXISTS
 
-Para consultas tipo "todos los X que cumplen Y"
-Usar COUNT con subconsulta
-Verificar que el conteo coincida exactamente
-Ejemplo: "ciclistas que han ganado TODOS los puertos de una etapa"
+### 🔸 **Funciones Agregadas Importantes:**
+- **COUNT(DISTINCT campo)**: cuenta valores únicos
+- **MIN/MAX**: para encontrar extremos con condiciones
+- **AVG**: para medias con filtros específicos
+- **SUM**: para totales por grupos
 
-🔸 Actualizar con Porcentajes:
-
-Usar operaciones matemáticas: precio * 1.15 (aumentar 15%)
-precio * 0.85 (descuento del 15%)
-precio * 1.10 (incremento del 10%)
-
-🔸 Subconsultas Correlacionadas:
-
-La subconsulta hace referencia a la consulta externa
-Se ejecuta una vez por cada fila de la consulta externa
-Muy útiles con EXISTS/NOT EXISTS
-
-🔸 Funciones Agregadas Importantes:
-
-COUNT(DISTINCT campo): cuenta valores únicos
-MIN/MAX: para encontrar extremos con condiciones
-AVG: para medias con filtros específicos
-SUM: para totales por grupos
-
-🔸 Patrones de Consulta Críticos:
-
-"Solo/Únicamente" → NOT EXISTS o COUNT DISTINCT = 1
-"Todos" → COUNT = subconsulta total o MIN/MAX con condiciones
-"Ninguno" → NOT EXISTS o LEFT JOIN + IS NULL
-"Al menos uno" → EXISTS o INNER JOIN
-"Más que todos" → >= ALL
-"Menos que todos" → <= ALL
-
+### 🔸 **Patrones de Consulta Críticos:**
+1. **"Solo/Únicamente"** → NOT EXISTS o COUNT DISTINCT = 1
+2. **"Todos"** → COUNT = subconsulta total o MIN/MAX con condiciones
+3. **"Ninguno"** → NOT EXISTS o LEFT JOIN + IS NULL
+4. **"Al menos uno"** → EXISTS o INNER JOIN
+5. **"Más que todos"** → >= ALL
+6. **"Menos que todos"** → <= ALL
