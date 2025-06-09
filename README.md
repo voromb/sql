@@ -575,3 +575,154 @@ ORDER BY c.edad DESC, c.nombre;
 4. **"Al menos uno"** → EXISTS o INNER JOIN
 5. **"Más que todos"** → >= ALL
 6. **"Menos que todos"** → <= ALL
+
+# Consultas SQL Corregidas - Soluciones
+
+## 📋 Índice
+- [Consultas DDL](#consultas-ddl)
+- [Consultas DML](#consultas-dml)
+
+---
+
+## ✅ Consultas DDL
+
+### **1. Crear una tabla copia_agente con todos los datos de la tabla agente**
+```sql
+CREATE TABLE Copia_agente
+SELECT * FROM agente;
+```
+
+### **1.2. Eliminar la columna dirección de la tabla agente**
+```sql
+ALTER TABLE agente DROP direccion;
+```
+
+### **1.3. Reducir un 10% las dietas de los agentes que no han puesto ninguna multa**
+```sql
+UPDATE agente
+SET dietas = dietas * 0.90
+WHERE codagente NOT IN (
+    SELECT codagente 
+    FROM multas 
+    WHERE codagente IS NOT NULL
+);
+```
+
+### **1.4. Restaurar las dietas originales de los agentes desde la tabla copia_agente**
+```sql
+UPDATE agente a INNER JOIN copia_agente ca 
+ON a.codagente = ca.codagente
+SET a.dietas = ca.dietas;
+```
+
+### **2. Añadir clave primaria a la tabla vehiculos usando el campo nmat**
+```sql
+ALTER TABLE vehiculos ADD PRIMARY KEY (nmat);
+```
+
+### **2.1. Añadir clave foránea en multas que referencie a agente**
+```sql
+ALTER TABLE multas ADD FOREIGN KEY(codagente) REFERENCES agente(codagente);
+```
+
+---
+
+## ✅ Consultas DML
+
+### **3. Obtener el nombre de los agentes y el importe de las multas menores a 200€**
+```sql
+SELECT a.nombre, m.importe
+FROM agente a INNER JOIN multas m ON a.codagente = m.codagente
+WHERE m.importe < 200;
+```
+
+### **4. Obtener el nombre de cada agente y el promedio de sus multas (incluyendo agentes sin multas)**
+```sql
+SELECT a.nombre, a.codagente, AVG(m.importe) as promedio_multas
+FROM agente a LEFT JOIN multas m ON a.codagente = m.codagente 
+GROUP BY a.codagente, a.nombre;
+```
+
+### **5. Obtener el nombre y promedio de multas del agente más joven que haya puesto más de 2 multas**
+```sql
+SELECT a.nombre, AVG(m.importe) as importeMedio
+FROM agente a INNER JOIN multas m ON a.codagente = m.codagente
+WHERE a.fnac = (SELECT MAX(a2.fnac) FROM agente a2)
+GROUP BY a.codagente, a.nombre
+HAVING COUNT(m.codmulta) > 2;
+```
+
+### **6. Obtener los agentes que han puesto más de 2 multas**
+```sql
+SELECT a.codagente, a.nombre, COUNT(m.codmulta) as total_multas
+FROM agente a INNER JOIN multas m ON a.codagente = m.codagente
+GROUP BY a.codagente, a.nombre
+HAVING COUNT(m.codmulta) > 2;
+```
+
+### **7. Obtener las personas que tienen más de 2 multas en sus vehículos**
+```sql
+SELECT p.nombre, p.dni
+FROM personas p INNER JOIN vehiculos v ON p.dni = v.dni_prop
+INNER JOIN multas m ON m.nmat = v.nmat
+GROUP BY p.dni, p.nombre
+HAVING COUNT(m.codmulta) > 2;
+```
+
+### **8. Obtener la persona que tiene el mayor importe total en multas de todos sus vehículos**
+```sql
+SELECT p.nombre, p.dni, SUM(m.importe) as importe_total
+FROM personas p INNER JOIN vehiculos v ON p.dni = v.dni_prop
+INNER JOIN multas m ON m.nmat = v.nmat
+GROUP BY p.dni, p.nombre
+HAVING SUM(m.importe) >= ALL (
+    SELECT SUM(m2.importe)
+    FROM personas p2 INNER JOIN vehiculos v2 ON p2.dni = v2.dni_prop
+    INNER JOIN multas m2 ON m2.nmat = v2.nmat 
+    GROUP BY p2.dni
+);
+```
+
+### **9. Obtener la persona que tiene el mayor número de vehículos**
+```sql
+SELECT p.nombre, COUNT(v.nmat) as total_vehiculos
+FROM personas p INNER JOIN vehiculos v ON p.dni = v.dni_prop
+GROUP BY p.dni, p.nombre
+HAVING COUNT(v.nmat) >= ALL (
+    SELECT COUNT(v2.nmat)
+    FROM personas p2 INNER JOIN vehiculos v2 ON p2.dni = v2.dni_prop
+    GROUP BY p2.dni
+);
+```
+
+### **10. Obtener las comisarías con los 2 presupuestos más altos**
+```sql
+SELECT c.nombre, c.Presupuesto
+FROM comisaria c
+WHERE 2 > (SELECT COUNT(DISTINCT c2.Presupuesto)
+           FROM comisaria c2
+           WHERE c.Presupuesto < c2.Presupuesto);
+```
+
+### **11. Obtener los agentes cuyo promedio de multas es menor que el presupuesto de su comisaría**
+```sql
+SELECT a.codagente, a.nombre, AVG(m.importe) as promedio_multas, c.Presupuesto
+FROM agente a INNER JOIN comisaria c ON a.Codcomisaria = c.codcomisaria
+INNER JOIN multas m ON m.codagente = a.codagente
+GROUP BY a.codagente, a.nombre, c.Presupuesto
+HAVING AVG(m.importe) < c.Presupuesto;
+```
+
+### **12. Obtener vehículos que tienen tantas multas como agentes hay en la comisaría más pequeña**
+```sql
+SELECT m.nmat
+FROM multas m 
+GROUP BY m.nmat
+HAVING COUNT(m.codmulta) = (
+    SELECT COUNT(a.codagente)
+    FROM agente a
+    WHERE a.Codcomisaria = (SELECT MIN(Codcomisaria) FROM agente)
+);
+```
+
+
