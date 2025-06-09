@@ -493,6 +493,36 @@ WHERE c.edad IN (
 
 ---
 
+
+
+### **Los 3 ciclistas con las 3 mayores edades:**
+
+**MÉTODO 1: Usando subconsulta con COUNT**
+```sql
+SELECT c.dorsal, c.nombre, c.edad, c.nomeq
+FROM ciclista c
+WHERE (
+    SELECT COUNT(DISTINCT c2.edad)
+    FROM ciclista c2
+    WHERE c2.edad > c.edad
+) < 3
+ORDER BY c.edad DESC, c.nombre;
+```
+
+**MÉTODO 2: Usando subconsulta correlacionada con EXISTS**
+
+```sql
+SELECT c.dorsal, c.nombre, c.edad, c.nomeq
+FROM ciclista c
+WHERE 3 > (
+    SELECT COUNT(*)
+    FROM ciclista c2
+    WHERE c2.edad > c.edad
+)
+ORDER BY c.edad DESC, c.nombre;
+```
+
+
 ## 🎓 **CONCEPTOS CLAVE PARA RECORDAR**
 
 ### 🔸 **NOT EXISTS vs NOT IN:**
