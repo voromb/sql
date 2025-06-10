@@ -960,7 +960,36 @@ WHERE   EXISTS (
 );
 ```
 
----
 
 
 
+### CREAR COPIA DE SEGURIDAD DE LA TABLA CONCIERTOS
+
+
+```sql
+-- Crear tabla de respaldo con todos los datos originales
+CREATE TABLE copia_conciertos
+SELECT * FROM conciertos;
+
+-- Verificar que la copia se creó correctamente
+SELECT COUNT(*) as registros_originales FROM conciertos;
+SELECT COUNT(*) as registros_copia FROM copia_conciertos;
+
+```
+
+
+### AÑADIR CLAVE FORÁNEA: cod_conc EN TABLA VENDEDOR → CONCIERTOS
+
+```sql
+
+-- Primero verificar que existe la columna cod_conc en vendedor
+-- Si no existe, crearla primero
+ALTER TABLE vendedor 
+ADD COLUMN cod_conc INT;
+
+-- Añadir la clave foránea
+ALTER TABLE vendedor 
+ADD CONSTRAINT fk_vendedor_concierto 
+FOREIGN KEY (cod_conc) REFERENCES conciertos(cod_concierto);
+
+```
