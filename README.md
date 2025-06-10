@@ -733,26 +733,17 @@ HAVING COUNT(m.codmulta) = (
 Obtener el nombre del equipo que ha ganado el mayor número de etapas.
 
 ```sql
-/* victorias de cada equipo y selección del máximo sin LIMIT */
-SELECT v.nombre, v.etapas_ganadas
-FROM (
-        SELECT  e.id_equipo,
-                e.nombre,
-                COUNT(*) AS etapas_ganadas
-        FROM    Equipos  e
-        INNER JOIN Etapas t ON t.id_equipo_ganador = e.id_equipo
-        GROUP BY e.id_equipo, e.nombre
-     ) AS v
-WHERE NOT EXISTS (
-        SELECT 1
-        FROM (
-                SELECT e2.id_equipo,
-                       COUNT(*) AS total
-                FROM   Equipos  e2
-                INNER JOIN Etapas t2 ON t2.id_equipo_ganador = e2.id_equipo
-                GROUP BY e2.id_equipo
-             ) AS v2
-        WHERE v2.total > v.etapas_ganadas
+SELECT e.nomeq as nombre_equipo, COUNT(et.netapa) as etapas_ganadas
+FROM equipo e
+INNER JOIN ciclista c ON e.nomeq = c.nomeq
+INNER JOIN etapa et ON c.dorsal = et.dorsal
+GROUP BY e.nomeq
+HAVING COUNT(et.netapa) >= ALL (
+    SELECT COUNT(et2.netapa)
+    FROM equipo e2
+    INNER JOIN ciclista c2 ON e2.nomeq = c2.nomeq
+    INNER JOIN etapa et2 ON c2.dorsal = et2.dorsal
+    GROUP BY e2.nomeq
 );
 ```
 
