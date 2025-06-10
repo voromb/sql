@@ -726,3 +726,241 @@ HAVING COUNT(m.codmulta) = (
 ```
 
 
+# Consultas SQL de ejemplo
+
+### 1. Equipo que más etapas ha ganado
+
+Obtener el nombre del equipo que ha ganado el mayor número de etapas.
+
+```sql
+/* victorias de cada equipo y selección del máximo sin LIMIT */
+SELECT v.nombre, v.etapas_ganadas
+FROM (
+        SELECT  e.id_equipo,
+                e.nombre,
+                COUNT(*) AS etapas_ganadas
+        FROM    Equipos  e
+        INNER JOIN Etapas t ON t.id_equipo_ganador = e.id_equipo
+        GROUP BY e.id_equipo, e.nombre
+     ) AS v
+WHERE NOT EXISTS (
+        SELECT 1
+        FROM (
+                SELECT e2.id_equipo,
+                       COUNT(*) AS total
+                FROM   Equipos  e2
+                INNER JOIN Etapas t2 ON t2.id_equipo_ganador = e2.id_equipo
+                GROUP BY e2.id_equipo
+             ) AS v2
+        WHERE v2.total > v.etapas_ganadas
+);
+```
+
+---
+
+### 2. LEFT JOIN – lista de etapas con el nombre del equipo ganador (si lo hubiera)
+
+```sql
+SELECT  t.id_etapa,
+        t.nombre AS etapa,
+        e.nombre AS equipo_ganador
+FROM    Etapas  t
+LEFT JOIN Equipos e ON e.id_equipo = t.id_equipo_ganador
+ORDER BY t.id_etapa;
+```
+
+---
+
+### 3. Tres ciclistas con más edad
+
+Mostrar los tres ciclistas más veteranos.
+
+```sql
+SELECT  c1.nombre,
+        c1.fecha_nacimiento
+FROM    Ciclistas c1
+WHERE   2 >= (
+        SELECT COUNT(*)
+        FROM   Ciclistas c2
+        WHERE  c2.fecha_nacimiento < c1.fecha_nacimiento
+);
+```
+
+> *Si hay empates en la tercera posición, todos los ciclistas con esa edad serán incluidos.*
+
+---
+
+### 4. Ciclista más joven
+
+#### a) Sin condición adicional
+
+```sql
+SELECT  c.nombre,
+        c.fecha_nacimiento
+FROM    Ciclistas c
+WHERE   NOT EXISTS (
+        SELECT 1
+        FROM   Ciclistas c2
+        WHERE  c2.fecha_nacimiento > c.fecha_nacimiento
+);
+```
+
+#### b) Más joven que haya ganado alguna etapa
+
+```sql
+SELECT  c.nombre,
+        c.fecha_nacimiento
+FROM    Ciclistas c
+WHERE   EXISTS (
+          SELECT 1
+          FROM   Resultados_Etapa r
+          WHERE  r.id_ciclista = c.id_ciclista
+            AND  r.posicion    = 1
+       )
+  AND   NOT EXISTS (
+          SELECT 1
+          FROM   Ciclistas c2
+          WHERE  EXISTS (
+                    SELECT 1
+                    FROM   Resultados_Etapa r2
+                    WHERE  r2.id_ciclista = c2.id_ciclista
+                      AND  r2.posicion    = 1 )
+            AND  c2.fecha_nacimiento > c.fecha_nacimiento
+       );
+```
+
+---
+
+### 5. Grupo que ha tocado en **todos** los festivales
+
+```sql
+SELECT  g.nombre
+FROM    Grupos g
+INNER JOIN Actuaciones a ON a.id_grupo = g.id_grupo
+GROUP BY g.id_grupo, g.nombre
+HAVING  COUNT(DISTINCT a.id_festival) = (SELECT COUNT(*) FROM Festivales);
+```
+
+---
+
+### 6. Coche sancionado por **todos** los agentes de una misma comisaría (`:comisaria`)
+
+```sql
+SELECT  c.matricula
+FROM    Coches c
+WHERE   NOT EXISTS (
+        SELECT 1
+        FROM   Agentes ag
+        WHERE  ag.id_comisaria = :comisaria
+          AND NOT EXISTS (
+                SELECT 1
+                FROM   Multas m
+                WHERE  m.id_coche  = c.id_coche
+                  AND  m.id_agente = ag.id_agente
+          )
+);
+```
+
+---
+
+### 7. Modificar una tabla
+
+Añadir la columna **nacionalidad** en `Ciclistas`.
+
+```sql
+ALTER TABLE Ciclistas
+ADD COLUMN nacionalidad VARCHAR(50);
+```
+
+---
+
+### 8. Recuperar el precio de otra tabla
+
+Calcular el importe de cada línea de pedido (`cantidad × precio`).
+
+```sql
+SELECT  dp.id_detalle,
+        p.descripcion,
+        dp.cantidad,
+        p.precio,
+        dp.cantidad * p.precio AS importe_linea
+FROM    Detalle_Pedido dp
+INNER JOIN Productos      p ON p.id_producto = dp.id_producto;
+```
+
+---
+
+### 9. Coches con más de una multa en el mismo sitio
+
+```sql
+SELECT  c.matricula,
+        m.lugar,
+        COUNT(*) AS num_multas
+FROM    Coches  c
+INNER JOIN Multas m ON m.id_coche = c.id_coche
+GROUP BY c.id_coche, c.matricula, m.lugar
+HAVING  COUNT(*) > 1;
+```
+
+---
+
+### 10. La canción más larga (solo si es única)
+
+```sql
+SELECT  c.titulo,
+        c.duracion_seg
+FROM    Canciones c
+WHERE   NOT EXISTS (
+          SELECT 1
+          FROM   Canciones c2
+          WHERE  c2.duracion_seg > c.duracion_seg
+       )
+  AND   NOT EXISTS (
+          SELECT 1
+          FROM   Canciones c3
+          WHERE  c3.duracion_seg = c.duracion_seg
+            AND  c3.id_cancion  <> c.id_cancion
+       );
+```
+
+---
+
+### 11. Compañías discográficas que **no** han trabajado con grupos españoles
+
+```sql
+SELECT  d.nombre
+FROM    Discograficas d
+WHERE   NOT EXISTS (
+        SELECT 1
+        FROM   Contratos  co
+        INNER JOIN Grupos g ON g.id_grupo = co.id_grupo
+        WHERE  co.id_discografica = d.id_discografica
+          AND  g.pais_origen      = 'España'
+);
+```
+
+---
+
+### 12. Compañías discográficas que **solo** han trabajado con grupos españoles
+
+```sql
+SELECT  d.nombre
+FROM    Discograficas d
+WHERE   EXISTS (
+        SELECT 1
+        FROM   Contratos co
+        WHERE  co.id_discografica = d.id_discografica
+)
+  AND  NOT EXISTS (
+        SELECT 1
+        FROM   Contratos  co
+        INNER JOIN Grupos g ON g.id_grupo = co.id_grupo
+        WHERE  co.id_discografica = d.id_discografica
+          AND  g.pais_origen      <> 'España'
+);
+```
+
+---
+
+
+
